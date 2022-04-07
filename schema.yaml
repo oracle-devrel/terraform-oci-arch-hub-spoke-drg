@@ -1,0 +1,425 @@
+## Copyright © 2021, Oracle and/or its affiliates. 
+## All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
+
+    title: "Create a dmz-spoke network in Oracle Cloud Infrastructure"
+    stackDescription: Deploy a dmz-spoke network in Oracle Cloud Infrastructure
+    schemaVersion: 1.1.0
+    version: "20190404"
+    locale: "en"
+
+    variableGroups:
+    - title: General Configuration
+      visible: false
+      variables:
+      - tenancy_ocid
+      - region
+      - instance_os
+      - release
+
+    - title: Required Configuration
+      visible: true  
+      variables:  
+      - compartment_ocid
+      - availability_domain_name 
+      - show_advanced  
+
+    - title: Networking Optional Configuration
+      visible: 
+          and:
+            - show_advanced
+      variables: 
+      - igw_display_name
+      - dmz_vcn_display_name
+      - dmz_vcn_cidr_block
+      - dmz_vcn_dns_label
+      - dmz_subnet_pub01_display_name
+      - dmz_subnet_pub01_cidr_block
+      - spoke01_vcn_display_name
+      - spoke01_vcn_cidr_block
+      - spoke01_vcn_dns_label
+      - spoke01_subnet_priv01_display_name
+      - spoke01_subnet_priv01_cidr_block
+      - spoke02_vcn_display_name
+      - spoke02_vcn_dns_label
+      - spoke02_vcn_cidr_block
+      - spoke02_subnet_priv01_display_name
+      - spoke02_subnet_priv01_cidr_block
+      - drg01_display_name
+      - drg01_dmz_attachment_display_name
+      - drg01_spoke01_attachment_display_name
+      - drg01_spoke02_attachment_display_name
+
+    - title: Compute Optional Configuration
+      visible: 
+          and:
+            - show_advanced    
+      variables: 
+      - ssh_public_key
+      - instance_os 
+      - linux_os_version
+      - InstanceShape
+      - InstanceFlexShapeOCPUS
+      - InstanceFlexShapeMemory
+      - deploy_spoke01_instance
+      - InstanceShapeSpoke01
+      - InstanceFlexShapeOCPUSSpoke01
+      - InstanceFlexShapeMemorySpoke01
+      - deploy_spoke02_instance
+      - InstanceShapeSpoke02
+      - InstanceFlexShapeOCPUSSpoke02
+      - InstanceFlexShapeMemorySpoke02
+
+    variables:
+
+      show_advanced:
+        type: boolean
+        title: "Show advanced options?"
+        description: "Shows advanced options."
+        visible: true
+        default: false
+
+      compartment_ocid:
+        type: oci:identity:compartment:id
+        required: true
+        title: Compartment
+        description: Compartment where you want to create the solution resources
+
+      region:
+        type: oci:identity:region:name
+        required: true
+        title: Region
+        description: Region where you want to deploy the resources defined by this stack
+
+      availability_domain_name:
+        type: oci:identity:availabilitydomain:name
+        required: true
+        visible: true
+        title: "Availability Domain to be chosen"
+        description: "Choose Availability Domain where infrastructure will be deployed."
+        dependsOn:
+          regionName: ${region}
+          compartmentId: ${compartment_ocid}
+
+      igw_display_name:
+        type: string
+        required: true
+        title: Internet Gateway Name
+        description: Display name of the Internet Gateway of the dmz VCN
+
+      dmz_vcn_cidr_block:
+        type: string
+        required: true
+        title: dmz VCN CIDR Block
+        description: CIDR block that will be assigned to the dmz VCN
+
+      dmz_vcn_dns_label:
+        type: string
+        required: true
+        title: DNS Label dmz VCN
+        description: DNS label that will be asigned to the dmz VCN
+
+      dmz_vcn_display_name:
+        type: string
+        required: true
+        title: VCN Name
+        description: Display name assigned to the dmz VCN
+
+      dmz_subnet_pub01_cidr_block:
+        type: string
+        required: true
+        title: Public Subnet CIDR Block
+        description: CIDR block that will be assigned to the Public Subnet in the dmz VCN
+
+      dmz_subnet_pub01_display_name:
+        type: string
+        required: true
+        title: Public Subnet Display Name  
+        description: Display name assigned to the Public subnet in the dmz VCN
+
+      spoke01_vcn_cidr_block:
+        type: string
+        required: true
+        title: Spoke 1 VCN CIDR Block
+        description: CIDR block that will be assigned to the Spoke 1 VCN
+
+      spoke01_vcn_dns_label:
+        type: string
+        required: true
+        title: DNS Label SPOKE 1 VCN
+        description: DNS label that will be asigned to the SPOKE 1 VCN
+
+      spoke01_vcn_display_name:
+        type: string
+        required: true
+        title: SPOKE 1 VCN Display Name
+        description: Display name assigned to the Spoke 1 VCN
+
+      spoke01_subnet_priv01_cidr_block:
+        type: string
+        required: true
+        title: Private Subnet CIDR Block on Spoke 1
+        description: CIDR block that will be assigned to the Private Subnet in the Spoke 1 VCN
+
+      spoke01_subnet_priv01_display_name:
+        type: string
+        required: true
+        title: Private Subnet Display Name
+        description: Display name assigned to the private subnet in the Spoke 1 VCN
+
+      spoke02_vcn_cidr_block:
+        type: string
+        required: true
+        title: Spoke 2 VCN CIDR Block
+        description: CIDR block that will be assigned to the Spoke 1 VCN
+
+      spoke02_vcn_dns_label:
+        type: string
+        required: true
+        title: DNS Label SPOKE 2 VCN
+        description: DNS label that will be asigned to the SPOKE 2 VCN
+
+      spoke02_vcn_display_name:
+        type: string
+        required: true
+        title: SPOKE 2 VCN Display Name
+        description: Display name assigned to the Spoke 2 VCN
+
+      spoke02_subnet_priv01_cidr_block:
+        type: string
+        required: true
+        title: Private Subnet CIDR Block on Spoke 2
+        description: CIDR block that will be assigned to the Private Subnet in the Spoke 2 VCN
+
+      spoke02_subnet_priv01_display_name:
+        type: string
+        required: true
+        title: Private Subnet Display Name
+        description: Display name assigned to the private subnet in the Spoke 2 VCN
+
+      ssh_public_key:
+        type: oci:core:ssh:publickey
+        title: "Public SSH Key"
+        description: "Choose public SSH Key to be uploaded into compute instances."
+        required: false
+
+      InstanceShape:
+        type: oci:core:instanceshape:name
+        required: false
+        title: "Bastion Instance Shape"
+        description: A shape is a template that determines the number of CPUs, amount of memory, and other resources allocated to Bastion instance.
+        default: "VM.Standard.E2.1.Micro"
+        dependsOn:
+          compartmentId: ${compartment_ocid}
+
+      InstanceFlexShapeOCPUS:
+        type: number
+        required: false
+        minimum: 1
+        maximum: 128
+        multipleOf: 1
+        default: 1
+        title: "Bastion Flex Shape OCPUs"
+        description: "Choose number of OCPUs for Flex Shape."
+        visible:
+          and:
+            - or:
+              - eq:
+                - InstanceShape 
+                - "VM.Standard.E3.Flex"
+              - eq:
+                - InstanceShape 
+                - "VM.Standard.E4.Flex"
+              - eq:
+                - InstanceShape 
+                - "VM.Standard.A1.Flex"
+
+      InstanceFlexShapeMemory:
+        type: number
+        required: false
+        minimum: 1
+        maximum: 128
+        multipleOf: 1
+        default: 10
+        title: "Bastion Flex Shape Memory (GB)"
+        description: "Choose number GB for Flex Shape Memory."
+        visible:
+          and:
+            - or:
+              - eq:
+                - InstanceShape 
+                - "VM.Standard.E3.Flex"
+              - eq:
+                - InstanceShape
+                - "VM.Standard.E4.Flex"
+              - eq:
+                - InstanceShape
+                - "VM.Standard.A1.Flex"
+
+      instance_os:
+        type: enum
+        required: false
+        title: "Instance OS"
+        description: "An Operating System that determines the operating system for the instance."
+        default: "Oracle Linux"
+        enum:
+          - "Oracle Linux"
+      
+      linux_os_version:
+        type: enum
+        required: false
+        title: "Instance OS version"
+        description: "An Operating System version that determines the operating system version for the instance."
+        default: "8"
+        enum:
+          - "8"
+          - "7.9"
+
+      deploy_spoke01_instance:
+        type: boolean
+        title: "Spoke01 Compute Instance?"
+        description: "Check the box to deploy Compute Instance in Spoke01 VCN."
+        visible: true
+        default: false
+
+      InstanceShapeSpoke01:
+        type: oci:core:instanceshape:name
+        visible: 
+            and:
+              - deploy_spoke01_instance
+        required: false
+        title: "Spoke01 Instance Shape"
+        description: A shape is a template that determines the number of CPUs, amount of memory, and other resources allocated to Bastion instance.
+        default: "VM.Standard.E2.1.Micro"
+        dependsOn:
+          compartmentId: ${compartment_ocid}
+
+      InstanceFlexShapeOCPUSSpoke01:
+        type: number
+        required: false
+        minimum: 1
+        maximum: 128
+        multipleOf: 1
+        default: 1
+        title: "Spoke01 Flex Shape OCPUs"
+        description: "Choose number of OCPUs for Flex Shape."
+        visible:
+          and:
+            - and:
+              - deploy_spoke01_instance
+              - or:
+                - eq:
+                  - InstanceShapeSpoke01 
+                  - "VM.Standard.E3.Flex"
+                - eq:
+                  - InstanceShapeSpoke01 
+                  - "VM.Standard.E4.Flex"
+                - eq:
+                  - InstanceShapeSpoke01 
+                  - "VM.Standard.A1.Flex"
+
+      InstanceFlexShapeMemorySpoke01:
+        type: number
+        required: false
+        minimum: 1
+        maximum: 128
+        multipleOf: 1
+        default: 10
+        title: "Spoke01 Flex Shape Memory (GB)"
+        description: "Choose number GB for Flex Shape Memory."
+        visible:
+          and:
+            - and:
+              - deploy_spoke01_instance
+              - or:
+                - eq:
+                  - InstanceShapeSpoke01 
+                  - "VM.Standard.E3.Flex"
+                - eq:
+                  - InstanceShapeSpoke01 
+                  - "VM.Standard.E4.Flex"
+                - eq:
+                  - InstanceShapeSpoke01 
+                  - "VM.Standard.A1.Flex"
+
+      deploy_spoke02_instance:
+        type: boolean
+        title: "Spoke02 Compute Instance?"
+        description: "Check the box to deploy Compute Instance in Spoke02 VCN."
+        visible: true
+        default: false
+
+      InstanceShapeSpoke02:
+        type: oci:core:instanceshape:name
+        visible: 
+            and:
+              - deploy_spoke02_instance
+        required: false
+        title: "Spoke02 Instance Shape"
+        description: A shape is a template that determines the number of CPUs, amount of memory, and other resources allocated to Bastion instance.
+        default: "VM.Standard.E2.1.Micro"
+        dependsOn:
+          compartmentId: ${compartment_ocid}
+
+      InstanceFlexShapeOCPUSSpoke02:
+        type: number
+        required: false
+        minimum: 1
+        maximum: 128
+        multipleOf: 1
+        default: 1
+        title: "Spoke02 Flex Shape OCPUs"
+        description: "Choose number of OCPUs for Flex Shape."
+        visible:
+          and:
+            - and:
+              - deploy_spoke02_instance
+              - or:
+                - eq:
+                  - InstanceShapeSpoke02 
+                  - "VM.Standard.E3.Flex"
+                - eq:
+                  - InstanceShapeSpoke02 
+                  - "VM.Standard.E4.Flex"
+                - eq:
+                  - InstanceShapeSpoke02 
+                  - "VM.Standard.A1.Flex"
+
+      InstanceFlexShapeMemorySpoke02:
+        type: number
+        required: false
+        minimum: 1
+        maximum: 128
+        multipleOf: 1
+        default: 10
+        title: "Spoke02 Flex Shape Memory (GB)"
+        description: "Choose number GB for Flex Shape Memory."
+        visible:
+          and:
+            - and:
+              - deploy_spoke02_instance
+              - or:
+                - eq:
+                  - InstanceShapeSpoke02 
+                  - "VM.Standard.E3.Flex"
+                - eq:
+                  - InstanceShapeSpoke02 
+                  - "VM.Standard.E4.Flex"
+                - eq:
+                  - InstanceShapeSpoke02 
+                  - "VM.Standard.A1.Flex"
+
+      release:
+        type: string
+        required: false
+        visible: false
+        title: "Reference Architecture Release (OCI Architecture Center)"
+
+
+    outputs:
+      
+      generated_ssh_private_key:
+        title: "Generated SSH Private Key"
+        displayText: "Generated SSH Private Key"
+        type: copyableString
+        visible: true
+
