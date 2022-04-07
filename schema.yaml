@@ -208,7 +208,7 @@
         required: false
         title: "Bastion Instance Shape"
         description: A shape is a template that determines the number of CPUs, amount of memory, and other resources allocated to Bastion instance.
-        default: "VM.Standard.E2.1.Micro"
+        default: "VM.Standard.E4.Flex"
         dependsOn:
           compartmentId: ${compartment_ocid}
 
