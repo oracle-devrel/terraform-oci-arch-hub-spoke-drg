@@ -15,6 +15,7 @@
       - region
       - instance_os
       - release
+      - availability_domain_number
 
     - title: Required Configuration
       visible: true  
